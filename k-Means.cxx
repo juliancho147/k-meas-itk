@@ -10,8 +10,10 @@ typedef unsigned char TLabel;
 
 typedef itk::Image< TPixel, Dim > TImage;
 typedef itk::Image< TLabel, Dim > TLabels;
+typedef itk::Array<double> TArray;
 int main(int argc, char* argv[])
 {
+	
 	if(argc < 4)
 	{
 		std::cerr
@@ -30,24 +32,41 @@ int main(int argc, char* argv[])
 
 	 typedef itk::ScalarImageKmeansImageFilter< TImage , TLabels> TKmeans;
 	 TKmeans::Pointer kmeans = TKmeans::New( );
+	 TKmeans::ParametersType  Means ;
 	 kmeans->SetInput( reader->GetOutput( ) );
 	   for( int i = 3; i < argc; ++i )
     		kmeans->AddClassWithInitialMean( std::atof( argv[ i ] ) );
+	 
+	
 
 	 typedef:: itk::ImageFileWriter< TLabels > TWriter;
 	 TWriter::Pointer writer = TWriter::New( );
 	 writer->SetInput(  kmeans->GetOutput( ) );
 	 writer->SetFileName( output_filename );
-
-	 try
+	 int counter = 3;
+	 do
 	 {
+		 try
+	    {
 	 	writer->Update( );
+		Means = kmeans->GetFinalMeans();
+	 	std::cout<<"get numbers of elements "<<kmeans->GetFinalMeans( ).GetNumberOfElements( )<<std::endl;
+		 for(int i = 0 ; i<3 ; i++)
+		 	std::cout<<Means[i]<<std::endl;
 
-	 } 
-	 catch(std::exception& err)
-	 {
+	    } 
+	     catch(std::exception& err)
+	     {
 	 	std::cerr<<"Error caught: "<<err.what( )<<std::endl;
 	 	return(EXIT_FAILURE);
-	 }
+	     }
+		  for( int i = 3; i < argc; ++i )
+    		kmeans->AddClassWithInitialMean( Means[i] ) ;	
+		counter--; 
+	 } while (counter > 0);
+	 	
+	 
+
+
 	 return(EXIT_SUCCESS);
 }
